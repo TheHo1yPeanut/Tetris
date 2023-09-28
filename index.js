@@ -65,6 +65,9 @@ function drawCurrentBlock(){
     }
 }
 
+
+
+
 function moveBlockDown(){
     eraseCurrentBlock();
         for(const key in currentBlock){
@@ -89,30 +92,60 @@ function moveBlockRight(){
     drawCurrentBlock();
 }
 
-function checkForObstructionLeft(){
+function drop(){
+
+    var dropNum = 0;
+    var dropNums = [];
+
     for(const key in currentBlock){
-        if(currentBlock[key].column - 1 == 0 || document.getElementById(`r${currentBlock[key].row}`).querySelector(`.c${currentBlock[key].column-1}`).classList.contains("stat")){
+
+        for(let i = 0; currentBlock[key].row - i != 0 && !document.getElementById(`r${currentBlock[key].row-i}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat"); i++){
+            console.log(document.getElementById(`r${currentBlock[key].row-i}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat"));
+            dropNum = i;
+        }
+
+        dropNums.push(dropNum);
+
+    }
+
+    console.log(dropNums);
+
+    eraseCurrentBlock();
+
+    for(const key in currentBlock){
+        currentBlock[key].row = currentBlock[key].row - Math.min(...dropNums);
+    }
+
+    lockBlock();
+
+}
+
+
+
+//          !!!!!!!!!!!!   obstruction checks   !!!!!!!!!!!!
+
+function checkForObstructionLeft(FcurrentBlock){
+    for(const key in currentBlock){
+        if(FcurrentBlock[key].column - 1 == 0 || document.getElementById(`r${FcurrentBlock[key].row}`).querySelector(`.c${FcurrentBlock[key].column-1}`).classList.contains("stat")){
             return false //obstructed
         } 
     }
     return true; //unobstructed
 }
 
-function checkForObstructionRight(){
+function checkForObstructionRight(FcurrentBlock){
     for(const key in currentBlock){
-        if(currentBlock[key].column + 1 == 11 || document.getElementById(`r${currentBlock[key].row}`).querySelector(`.c${currentBlock[key].column+1}`).classList.contains("stat")){
+        if(FcurrentBlock[key].column + 1 == 11 || document.getElementById(`r${FcurrentBlock[key].row}`).querySelector(`.c${FcurrentBlock[key].column+1}`).classList.contains("stat")){
             return false //obstructed
         }
     }
     return true; //unobstructed
 }
 
-function checkForObstructionBottom(){
-    for(const key in currentBlock){
+function checkForObstructionBottom(FcurrentBlock){
+    for(const key in FcurrentBlock){
 
-        if(currentBlock[key].row - 1 == 0){
-            return false //obstructed
-        } else if(document.getElementById(`r${currentBlock[key].row-1}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat")){
+        if(FcurrentBlock[key].row - 1 == 0 || document.getElementById(`r${FcurrentBlock[key].row-1}`).querySelector(`.c${FcurrentBlock[key].column}`).classList.contains("stat")){
             slideLogic();
             return false //obstructed
         }
@@ -120,13 +153,25 @@ function checkForObstructionBottom(){
     return true; //unobstructed
 }
 
+//          !!!!!!!!!!!!   obstruction checks   !!!!!!!!!!!!
+
+
+
+
+
 function slideLogic(){
     const slideTimer = setTimeout(() => {
         for(const key in currentBlock){
-            if(document.getElementById(`r${currentBlock[key].row-1}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat")){
-                lockBlock();
+            console.log(currentBlock[key].row);
+            if(currentBlock[key].row-1 != 0){
+                if(document.getElementById(`r${currentBlock[key].row-1}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat")){
+                    //i cant use checkForObstructionBottom() since that would in turn call slideLogic() creating an infinite loop
+                    lockBlock();
+                } else {
+                    clearTimeout(slideTimer);
+                }
             } else {
-                clearTimeout(slideTimer);
+                lockBlock();
             }
         }
     }, slidetime);
@@ -134,7 +179,7 @@ function slideLogic(){
 }
 
 function lockBlock(){
-    for(key in currentBlock){
+    for(const key in currentBlock){
         document.getElementById(`r${currentBlock[key].row}`).querySelector(`.c${currentBlock[key].column}`).classList.remove("active");
         document.getElementById(`r${currentBlock[key].row}`).querySelector(`.c${currentBlock[key].column}`).classList.add("stat");
     }
@@ -143,12 +188,16 @@ function lockBlock(){
     spawnBlock();
 }
 
+
+
+
 function checkForLines(){
     return;
 }
 
+
 function gLoop(){
-    if(checkForObstructionBottom()){
+    if(checkForObstructionBottom(currentBlock)){
         moveBlockDown();
     }
 
@@ -164,11 +213,14 @@ function gameStart(){
 gameStart();
 
 addEventListener("keydown", (e) => {
-    if(e.key == "ArrowLeft" && checkForObstructionLeft()){
+    if(e.key == "ArrowLeft" && checkForObstructionLeft(currentBlock)){
         moveBlockLeft();
-    } else if(e.key == "ArrowRight" && checkForObstructionRight()){
+    } else if(e.key == "ArrowRight" && checkForObstructionRight(currentBlock)){
         moveBlockRight();
-    } else if(e.key == "ArrowDown" && checkForObstructionBottom()){
+    } else if(e.key == "ArrowDown" && checkForObstructionBottom(currentBlock)){
         moveBlockDown();
+    } else if(e.key == " "){
+        console.log("dropping...")
+        drop();
     }
 })
