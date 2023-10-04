@@ -37,10 +37,9 @@ function spawnBlock(){
 
         for(let [key, value] of Object.entries(blocks.testBlock[subBlock])){
 
-            console.log(blocks.testBlock);
 
             currentBlock[subBlock][key] = value;
-            console.log(currentBlock[subBlock]);
+
         } // gives currentBlock all the values of blocks.testBlock (i hope), without making a reference to the original Object (had to make a nested loop in order too "deepcopy" correctly)
     }
 
@@ -100,7 +99,6 @@ function drop(){
     for(const key in currentBlock){
 
         for(let i = 0; currentBlock[key].row - i != 0 && !document.getElementById(`r${currentBlock[key].row-i}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat"); i++){
-            console.log(document.getElementById(`r${currentBlock[key].row-i}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat"));
             dropNum = i;
         }
 
@@ -162,7 +160,6 @@ function checkForObstructionBottom(FcurrentBlock){
 function slideLogic(){
     const slideTimer = setTimeout(() => {
         for(const key in currentBlock){
-            console.log(currentBlock[key].row);
             if(currentBlock[key].row-1 != 0){
                 if(document.getElementById(`r${currentBlock[key].row-1}`).querySelector(`.c${currentBlock[key].column}`).classList.contains("stat")){
                     //i cant use checkForObstructionBottom() since that would in turn call slideLogic() creating an infinite loop
@@ -185,14 +182,48 @@ function lockBlock(){
     }
 
     clearInterval(gameTimer);
+    checkForLines();
     spawnBlock();
 }
 
 
-
-
 function checkForLines(){
-    return;
+
+    let linesToBeChecked = [];
+    let linesToBeDestroyed = [];
+    let lineNotFull = false;
+
+    for(const key in currentBlock){
+        if(!linesToBeChecked.includes(currentBlock[key].row)){
+            linesToBeChecked.push(currentBlock[key].row);
+        }
+    }
+
+    for(let i = 0; i < linesToBeChecked.length; i++){
+
+        lineNotFull = false; // this needs to get reset in order to not lock out the following rows
+
+            for(let j = 1; j <= 10; j++){ // the width of one row is 10 blocks (i.e. 10 columns), so the loop goes through all 10 blocks to check if they're all set to "stat"
+                if(!document.getElementById(`r${linesToBeChecked[i]}`).querySelector(`.c${j}`).classList.contains("stat") || lineNotFull){ // this checks for "stat", if it isn't present then lineNotFull = true which in turn then ignores the rest of the blocks
+                    lineNotFull = true;
+                }
+            }
+
+            if(!lineNotFull){ // if this is not true that means that the line is full as per the logic above, hence the line number aka the row number gets pushed into the "toBeDestroyed" array 
+                linesToBeDestroyed.push(linesToBeChecked[i]);
+            }
+    }
+
+    destroyLines(linesToBeDestroyed);
+
+}
+
+function destroyLines(arr){
+    for(let i = 0; i < arr.length; i++){
+            for(let j = 1; j <= 10; j++){
+                document.getElementById(`r${arr[i]}`).querySelector(`.c${j}`).classList.remove("stat");
+            }
+    }
 }
 
 
@@ -201,7 +232,6 @@ function gLoop(){
         moveBlockDown();
     }
 
-    checkForLines();
     console.log(blocks.testBlock);
 }
 
